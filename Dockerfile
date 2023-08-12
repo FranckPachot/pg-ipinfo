@@ -11,15 +11,16 @@ RUN dnf update -y &&\
     dnf install -y postgresql11-devel 
 ENV PATH "/usr/pgsql-11/bin:${PATH}"
 
-# to test the extension later
-RUN dnf install -y postgresql11-server 
-
 # Compile the extension
+RUN mkdir -p /var/tmp/build
+WORKDIR      /var/tmp/build
 ADD . .
-RUN make ; make install 
+RUN make 
 
-# test the extension
-RUN su - postgres -c "/usr/pgsql-11/bin/initdb"
-#RUN rm /usr/pgsql-11/share/extension/pg-ipinfo.control
-RUN su - postgres -c "/usr/pgsql-11/bin/pg_ctl start" \
- && psql -U postgres -c 'create extension "pg-ipinfo"' -c "select ipinfo()" || du -a /usr/pgsql-11 | grep pg-ipinfo && false
+# install to directory and tar it to stdout on entrypoint
+RUN mkdir -p /var/tmp/pgext
+RUN make install -n \
+    | sed -e "s?$(dirname $(pg_config --libdir))?/var/tmp/pgext?" \
+    | sh -x
+ENTRYPOINT tar -C /var/tmp/pgext -cf - . 
+

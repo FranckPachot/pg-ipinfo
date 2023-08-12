@@ -8,23 +8,25 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#define HTTP_HOST "ipinfo.io"
+#define HTTP_PATH "/"
 #define MAX_RESPONSE_SIZE 1024
 
 // Function to send an HTTP GET request using raw sockets
 int send_request(const char *hostname, const char *path, char *response) {
+
     int sockfd;
     struct sockaddr_in server_addr;
     struct hostent *server;
-
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        ereport(WARNING, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Error in socker()")));
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Can't open socket")));
         return -1;
     }
 
     server = gethostbyname(hostname);
     if (server == NULL) {
-        ereport(WARNING, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Error in gethostbyname()")));
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Host not found")));
         return -1;
     }
 
@@ -34,7 +36,7 @@ int send_request(const char *hostname, const char *path, char *response) {
     server_addr.sin_port = htons(80);
 
     if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        ereport(WARNING, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Error in connect()")));
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Socket: Can't connect")));
         return -1;
     }
 
@@ -42,7 +44,7 @@ int send_request(const char *hostname, const char *path, char *response) {
     snprintf(request, sizeof(request), "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, hostname);
 
     if (write(sockfd, request, strlen(request)) < 0) {
-        ereport(WARNING, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Error in write")));
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("Socket: Write error")));
         return -1;
     }
 
@@ -65,7 +67,7 @@ void extract_text_content(const char *response, char *text_content) {
         start += 4; // Move past the double CRLF
         strcpy(text_content, start);
     } else {
-        strcpy(text_content, "Failed to extract text content");
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("No response")));
     }
 }
 
@@ -75,17 +77,10 @@ PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1( ipinfo );
 
-
-Datum ipinfo( PG_FUNCTION_ARGS );
-
 Datum ipinfo( PG_FUNCTION_ARGS )
 {
-
-
-    //char *hostname = VARDATA ( PG_GETARG_TEXT_PP(0) );
-    //char *path = VARDATA ( PG_GETARG_TEXT_PP(1) );
-    char *hostname = "ipinfo.io";
-    char *path = "/";
+    char *hostname = HTTP_HOST ;
+    char *path = HTTP_PATH ;
 
     char response[MAX_RESPONSE_SIZE];
     char text_content[MAX_RESPONSE_SIZE] = "";
@@ -100,7 +95,7 @@ Datum ipinfo( PG_FUNCTION_ARGS )
         memcpy( VARDATA(t), text_content, length );
         PG_RETURN_TEXT_P( t );
     } else {
-        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("xx")));
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("ERROR")));
 		    PG_RETURN_NULL();
     }
 
