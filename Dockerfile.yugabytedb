@@ -1,5 +1,5 @@
 
-FROM postgres
+FROM yugabytedb/yugabyte:latest as build
 
 # PostgreSQL devel packages for PostgreSQL 11:
 RUN dnf update -y &&\
@@ -12,4 +12,13 @@ RUN dnf update -y &&\
 ENV PATH "/usr/pgsql-11/bin:${PATH}"
 
 ADD . .
-RUN make ; make install 
+RUN make 
+
+RUN rm -rf /home/yugabyte/postgres/*
+RUN make install -n \
+    | sed -e "s?$(dirname $(pg_config --libdir))?/home/yugabyte/postgres?" \
+    | sh -x
+
+FROM yugabytedb/yugabyte:latest
+COPY --from=build /home/yugabyte/postgres /home/yugabyte
+
