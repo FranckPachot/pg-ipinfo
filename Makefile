@@ -1,4 +1,4 @@
-MODULES = pg-ipinfo
+MODULES = pg-ipinfo 
 EXTENSION = pg-ipinfo
 DATA = pg-ipinfo--1.0.0.sql
 #DOCS = README.pg-ipinfo

@@ -1,0 +1,31 @@
+
+FROM almalinux:8
+
+# PostgreSQL devel packages for PostgreSQL 11 on Alma8:
+RUN dnf update -y &&\
+    dnf groupinstall -y 'Development Tools' &&\
+    dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm &&\
+    dnf install epel-release -y redhat-rpm-config &&\
+    dnf --enablerepo=powertools install perl-IPC-Run -y &&\
+    dnf -qy module disable postgresql &&\
+    dnf install -y postgresql11-devel 
+ENV PATH "/usr/pgsql-11/bin:${PATH}"
+
+RUN dnf install -y postgresql11-server 
+USER postgres
+ENV PGDATA /var/tmp/pg
+RUN /usr/pgsql-11/bin/initdb
+
+VOLUME  /ext
+WORKDIR /ext
+ADD . .
+
+# Compile the extension
+RUN make 
+USER root
+RUN make install
+USER postgres
+RUN /usr/pgsql-11/bin/pg_ctl start &&\
+    psql -c 'create extension "pg-ipinfo"' &&\
+    psql -c 'select ipinfo() , ipinfo()'
+

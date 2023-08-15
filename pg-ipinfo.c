@@ -1,16 +1,18 @@
 #include "postgres.h"
+#include "fmgr.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include "fmgr.h"
 #include <sys/socket.h>
 #include <netdb.h>
 
 #define HTTP_HOST "ipinfo.io"
 #define HTTP_PATH "/"
 #define MAX_RESPONSE_SIZE 1024
+
 
 // Function to send an HTTP GET request using raw sockets
 int send_request(const char *hostname, const char *path, char *response) {
@@ -70,6 +72,8 @@ void extract_text_content(const char *response, char *text_content) {
         ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("No response")));
     }
 }
+
+
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
