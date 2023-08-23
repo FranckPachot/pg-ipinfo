@@ -29,6 +29,22 @@ yugabyte=# select ipinfo();
    "readme": "https://ipinfo.io/missingauth"                      +
  }
 (1 row)
+
+yugabyte=# select ipinfo('/city');
+
+ ipinfo
+--------
+Paris
+(1 row)
+
+
+yugabyte=# select ipinfo('/8.8.8.8/city');
+
+    ipinfo
+---------------
+Mountain View
+(1 row)
+
 ```
 
 ## Build and install for PostgreSQL
