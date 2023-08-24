@@ -27,5 +27,5 @@ RUN make install
 USER postgres
 RUN /usr/pgsql-11/bin/pg_ctl start &&\
     psql -c 'create extension "pg-ipinfo"' &&\
-    psql -c 'select ipinfo() , ipinfo()'
+    psql -c "select ipinfo('/city') , ipinfo() "  ; false
 

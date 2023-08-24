@@ -1,5 +1,6 @@
 #include "postgres.h"
 #include "fmgr.h"
+#include "utils/builtins.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -73,8 +74,6 @@ void extract_text_content(const char *response, char *text_content) {
     }
 }
 
-
-
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif
@@ -84,7 +83,7 @@ PG_FUNCTION_INFO_V1( ipinfo );
 Datum ipinfo( PG_FUNCTION_ARGS )
 {
     char *hostname = HTTP_HOST ;
-    char *path = HTTP_PATH ;
+    char *path = text_to_cstring(PG_GETARG_TEXT_P(0)) ;
 
     char response[MAX_RESPONSE_SIZE];
     char text_content[MAX_RESPONSE_SIZE] = "";
